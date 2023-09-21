@@ -1,0 +1,43 @@
+# Vector Configuration File
+[api]
+enabled = true
+# Define sources
+
+[sources.logback]
+type = "file"
+include = [ "/tmp/logs/*.log" ] # Replace with the actual path to your JSON logs
+
+[transforms.filter_warn_error]
+type = "filter"
+inputs = ["logback"]
+condition = 'includes(["ERROR", "WARN"], upcase!(parse_json!(string!(.message)).level))'
+
+
+# Define sinks
+[sinks.stdout]
+  type = "console"
+  inputs = [ "filter_warn_error" ]
+  encoding.charset = "UTF-8"
+  encoding.codec = "raw_message"
+
+[sinks.s3_sink]
+type = "aws_s3" # Use the AWS S3 sink
+inputs = ["filter_warn_error"] # Send data from the json_source to this sink
+bucket = "logging" # Replace with your S3 bucket name
+region = "us-east-1" # Replace with your S3 bucket's region
+endpoint = "http://localstack:4566"
+
+compression = "none"
+
+buffer.max_events = 100
+buffer.type = "memory"
+buffer.when_full = "block"
+
+encoding.charset = "UTF-8"
+encoding.codec = "raw_message"
+
+filename_append_uuid = false
+filename_extension = "log"
+filename_time_format = "%Y-%m-%d_%H-%M-%S"
+
+key_prefix = "tester/"
