@@ -21,15 +21,6 @@
         <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
     </appender>
 
-    <logger name="org" level="ERROR"/>
-    <logger name="reactor" level="ERROR"/>
-    <logger name="software.amazon" level="ERROR"/>
-    <logger name="com.zaxxer" level="ERROR"/>
-    <logger name="io.netty" level="ERROR"/>
-    <logger name="io.micronaut" level="ERROR"/>
-    <logger name="io.micronaut.context.env.DefaultEnvironment" level="INFO"/>
-    <logger name="io.micronaut.runtime.Micronaut" level="INFO"/>
-
     <root level="trace">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="ROLLING"/>

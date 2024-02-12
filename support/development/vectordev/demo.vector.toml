@@ -1,0 +1,27 @@
+# Vector Configuration File
+[api]
+enabled = true
+
+# Define sources
+[sources.logfile_source]
+type = "file"
+include = [ "/tmp/logs/tester.log" ]
+
+[transforms.logfile_source_filter]
+type = "filter"
+inputs = ["logfile_source"]
+condition = 'includes(["DEBUG", "INFO", "ERROR", "WARN"], upcase!(parse_json!(string!(.message)).level))'
+
+# enrich logs with some additional information
+[transforms.elastic_fields]
+type = "remap"
+inputs = [ "logfile_source_filter" ]
+source = '''
+.log_level |= upcase!(parse_json!(string!(.message)).level)
+'''
+
+[sinks.stdout]
+type = "console"
+inputs = [ "elastic_fields" ]
+encoding.charset = "UTF-8"
+encoding.codec = "raw_message"

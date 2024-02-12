@@ -3,48 +3,9 @@ networks:
     name: signherenet
 
 services:
-  localstack:
-    image: docker.io/localstack/localstack:2.0.2
-    container_name: localstack
-    networks:
-      - signherenet
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "4566:4566"
-      - "4571:4571"
-    environment:
-      - SERVICES=s3
-      - LS_LOG=debug
-      - EAGER_SERVICE_LOADING=1
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    healthcheck:
-      test: "awslocal s3 ls devbucket"
-      interval: 300s
-      timeout: 5s
-      retries: 15
-  devstackSetup:
-    image: ghcr.io/hightouchinc/awscli:2.11.27
-    container_name: signhere-devstackSetup
-    networks:
-      - signherenet
-    depends_on:
-      - localstack
-    environment:
-      - "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE"
-      - "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-      - "AWS_DEFAULT_REGION=us-east-1"
-      - "AWS_DEFAULT_OUTPUT=table"
-    stdin_open: true
-    tty: true
-    restart: "no"
-    volumes:
-      - ./support/development/localstack:/tmp/localstack
-    entrypoint: [ "/tmp/localstack/configure-dev-localstack.py" ]
-
   logging:
     container_name: logging
-    image: docker.io/timberio/vector:0.32.2-debian
+    image: docker.io/timberio/vector:0.35.0-debian
     networks:
       - signherenet
     logging:
@@ -53,14 +14,10 @@ services:
         max-file: "5"
         max-size: "10m"
     restart: no
-    depends_on:
-      - localstack
-    environment:
-      - "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE"
-      - "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-      - "AWS_DEFAULT_REGION=us-east-1"
-#      - "VECTOR_LOG=debug"
+    environment: [
+#      "VECTOR_LOG=debug"
+    ]
     volumes:
       - ./support/development/vectordev:/etc/vectordev
       - ./logs:/tmp/logs
-    command: ["--config-toml", "/etc/vectordev/vector.toml", "--watch-config"]
+    command: ["--config-toml", "/etc/vectordev/demo.vector.toml", "--watch-config"]
