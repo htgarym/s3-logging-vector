@@ -7,21 +7,48 @@ enabled = true
 type = "file"
 include = [ "/tmp/logs/tester.log" ]
 
-[transforms.logfile_source_filter]
+[transforms.filter_logfile]
 type = "filter"
 inputs = ["logfile_source"]
-condition = 'includes(["DEBUG", "INFO", "ERROR", "WARN"], upcase!(parse_json!(string!(.message)).level))'
+condition = 'includes(["DEBUG", "INFO", "WARN", "ERROR"], parse_json!(string!(.message)).level)'
 
-# enrich logs with some additional information
-[transforms.elastic_fields]
+[transforms.enriched]
 type = "remap"
-inputs = [ "logfile_source_filter" ]
+inputs = ["filter_logfile"]
 source = '''
-.log_level |= upcase!(parse_json!(string!(.message)).level)
+o_host = .host
+. = parse_json!(string!(.message))
+.host = o_host
+.host.name = get_env_var("HOSTNAME") ?? ""
+.host.architecture = get_env_var("MACHTYPE") ?? ""
+.app_id = get_env_var("APP_ID") ?? ""
+.category = .logger_name
+.thread = .thread_name
+.agent_name = "vector"
+del(.level_value)
+del(.@version)
+del(.logger_name)
+del(.thread_name)
 '''
 
 [sinks.stdout]
 type = "console"
-inputs = [ "elastic_fields" ]
+inputs = [ "enriched" ]
 encoding.charset = "UTF-8"
-encoding.codec = "raw_message"
+encoding.codec = "json"
+
+# elastic connection
+[sinks.nigel_pos_elastic]
+api_version = "v8"
+type = "elasticsearch"
+inputs = [ "enriched" ]
+endpoints = [ "https://nigel-pos.es.us-east-2.aws.elastic-cloud.com:9243" ]
+bulk.action = "create"
+buffer.max_events = 1
+buffer.type = "memory"
+mode = "data_stream"
+data_stream.namespace = "default"
+data_stream.type = "logs"
+data_stream.dataset = "vector-cloud-demo"
+encoding.timestamp_format = "rfc3339"
+request.headers = { "Authorization" = "ApiKey QnBsOWlvMEJYa3BURHNZUnpoSGs6ZXFtakFKRGlUMDZYdEd0YVpNVDBXdw==" }

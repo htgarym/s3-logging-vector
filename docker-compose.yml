@@ -1,13 +1,55 @@
 networks:
-  signherenet:
-    name: signherenet
+  vectornet:
+    name: vectornet
 
 services:
+  opensearch:
+    image: docker.io/opensearchproject/opensearch:2.11.1
+    container_name: signhere-opensearch
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms200m -Xmx600m"
+    ports:
+      - "9200:9200"
+    networks:
+      - vectornet
+    profiles:
+      - search
+    healthcheck:
+      test: curl -s http://localhost:9200/_health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    entrypoint:
+      - opensearch
+      - "-Ehttp.port=9200"
+      - "-Ehttp.publish_port=9200"
+      - "-Enetwork.host=0.0.0.0"
+      - "-Ehttp.compression=false"
+      - "-Eplugins.security.disabled=true"
+      - "-Ediscovery.type=single-node"
+  opensearch-dashboard:
+    image: docker.io/opensearchproject/opensearch-dashboards:2.11.1
+    container_name: signhere-opensearch-dashboard
+    depends_on:
+      - opensearch
+    ports:
+      - "5601:5601"
+    networks:
+      - vectornet
+    profiles:
+      - search
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: true
+
   logging:
     container_name: logging
     image: docker.io/timberio/vector:0.35.0-debian
     networks:
-      - signherenet
+      - vectornet
+    profiles:
+      - search
+      - logging
     logging:
       driver: "json-file"
       options:
@@ -15,7 +57,9 @@ services:
         max-size: "10m"
     restart: no
     environment: [
-#      "VECTOR_LOG=debug"
+      "HOSTNAME=test01",
+      "APP_ID=boai"
+      #      "VECTOR_LOG=debug"
     ]
     volumes:
       - ./support/development/vectordev:/etc/vectordev
