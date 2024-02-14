@@ -12,19 +12,21 @@ type = "filter"
 inputs = ["logfile_source"]
 condition = 'includes(["DEBUG", "INFO", "WARN", "ERROR"], parse_json!(string!(.message)).level)'
 
-[transforms.enriched]
+[transforms.elastic]
 type = "remap"
 inputs = ["filter_logfile"]
 source = '''
 o_host = .host
 . = parse_json!(string!(.message))
 .host = o_host
-.host.name = get_env_var("HOSTNAME") ?? ""
 .host.architecture = get_env_var("MACHTYPE") ?? ""
-.app_id = get_env_var("APP_ID") ?? ""
+.fields.env = "gary-test"
+.fields.op = false
+.fields.app_id = get_env_var("APP_ID") ?? ""
 .category = .logger_name
 .thread = .thread_name
-.agent_name = "vector"
+.agent.name = "vector"
+.agent.type = "vector"
 del(.level_value)
 del(.@version)
 del(.logger_name)
@@ -33,7 +35,7 @@ del(.thread_name)
 
 [sinks.stdout]
 type = "console"
-inputs = [ "enriched" ]
+inputs = [ "elastic" ]
 encoding.charset = "UTF-8"
 encoding.codec = "json"
 
