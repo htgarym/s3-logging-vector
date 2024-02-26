@@ -19,7 +19,7 @@ source = '''
 o_host = .host
 . = parse_json!(string!(.message))
 .host = o_host
-.host.architecture = get_env_var("MACHTYPE") ?? ""
+.host.name = get_hostname() ?? "unknown-host"
 .fields.env = "gary-test"
 .fields.op = false
 .fields.app_id = get_env_var("APP_ID") ?? ""
@@ -39,18 +39,18 @@ inputs = [ "elastic" ]
 encoding.charset = "UTF-8"
 encoding.codec = "json"
 
-# elastic connection
-[sinks.nigel_pos_elastic]
-api_version = "v8"
-type = "elasticsearch"
-inputs = [ "enriched" ]
-endpoints = [ "https://nigel-pos.es.us-east-2.aws.elastic-cloud.com:9243" ]
-bulk.action = "create"
-buffer.max_events = 1
-buffer.type = "memory"
-mode = "data_stream"
-data_stream.namespace = "default"
-data_stream.type = "logs"
-data_stream.dataset = "vector-cloud-demo"
-encoding.timestamp_format = "rfc3339"
-request.headers = { "Authorization" = "ApiKey QnBsOWlvMEJYa3BURHNZUnpoSGs6ZXFtakFKRGlUMDZYdEd0YVpNVDBXdw==" }
+## elastic connection
+#[sinks.nigel_pos_elastic]
+#api_version = "v8"
+#type = "elasticsearch"
+#inputs = [ "elastic" ]
+#endpoints = [ "https://nigel-pos.es.us-east-2.aws.elastic-cloud.com:9243" ]
+#bulk.action = "create"
+#buffer.max_events = 100
+#buffer.type = "memory"
+#mode = "data_stream"
+#data_stream.namespace = "default"
+#data_stream.type = "logs"
+#data_stream.dataset = "vector-cloud-demo"
+#encoding.timestamp_format = "rfc3339"
+#request.headers = { "Authorization" = "ApiKey QnBsOWlvMEJYa3BURHNZUnpoSGs6ZXFtakFKRGlUMDZYdEd0YVpNVDBXdw==" }
